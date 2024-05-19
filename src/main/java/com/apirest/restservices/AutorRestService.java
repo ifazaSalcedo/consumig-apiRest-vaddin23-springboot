@@ -5,6 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+<<<<<<< HEAD
+import reactor.core.publisher.Mono;
+=======
+>>>>>>> 5319a24 (Inicio de Seguimiento)
 
 
 import java.io.Serializable;
@@ -44,4 +48,17 @@ public class AutorRestService implements Serializable {
         return autores;
 
     }
+<<<<<<< HEAD
+    public AutorDTO save(AutorDTO autorDTO){
+        AutorDTO autor = webClient
+                .post()
+                .uri("/api/v1/biblioteca/autores")
+                .body(Mono.just(autorDTO), AutorDTO.class)
+                .retrieve()
+                .bodyToMono(AutorDTO.class)
+                .block();
+        return autor;
+    }
+=======
+>>>>>>> 5319a24 (Inicio de Seguimiento)
 }
