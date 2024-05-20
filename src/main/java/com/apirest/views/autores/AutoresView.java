@@ -4,6 +4,8 @@ import com.apirest.restdata.AutorDTO;
 import com.apirest.restservices.AutorRestService;
 import com.apirest.views.MainLayout;
 import com.vaadin.flow.component.AttachEvent;
+import com.vaadin.flow.component.ClickEvent;
+import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Image;
@@ -19,24 +21,36 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class AutoresView extends VerticalLayout {
 
     private AutorRestService autorRestService;
+    private Button addAutor= new Button("Nuevo Registro");
     private Grid<AutorDTO> autorDTOGrid= new Grid<>();
+    private AutoresAbmView formAutor;
 
     public AutoresView(@Autowired AutorRestService autorRestService) {
+
         this.autorRestService= autorRestService;
+
+        add(addAutor);
+
+        layoutDetails();
+
+        configureFormAutor();
 
         setSpacing(false);
 
         setSizeFull();
 
+
+        //ACCION BOTON AGREGAR AUTOR
+        addAutor.addClickListener(this::openDialogAutor);
+
     }
 
-    @Override
-    protected void onAttach(AttachEvent attachEvent) {
+    private void openDialogAutor(ClickEvent<Button> event) {
+        formAutor.open();
+    }
 
-        layoutDetails();
-
-        super.onAttach(attachEvent);
-
+    private void configureFormAutor() {
+        formAutor= new AutoresAbmView(autorRestService);
     }
 
     private void layoutDetails() {
