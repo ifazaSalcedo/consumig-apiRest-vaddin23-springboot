@@ -24,17 +24,6 @@ public class AutorRestService implements Serializable {
     }
 
     public List<AutorDTO> findAll(){
-        //SIN AUTENTICACION A LA APIREST
-//        final WebClient.RequestHeadersSpec<?> spec=
-//                WebClient
-//                        .create()
-//                        .get()
-//                        .uri("https://localhost:8080/api/v1/biblioteca/autores");
-//        final List<AutorDTO> autores = spec.retrieve()
-//                .toEntityList(AutorDTO.class)
-//                .block()
-//                .getBody();
-
         //ENVIAR AUTENTICACION A LA APIREST
         List<AutorDTO> autores = webClient
                 .get()
