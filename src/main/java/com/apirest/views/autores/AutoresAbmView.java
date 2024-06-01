@@ -48,8 +48,8 @@ public class AutoresAbmView extends Dialog {
             try {
                 saveAthor();
                 fireEvent(new SaverAthorEvent(this, binder.getBean()));
-            } catch (Exception ex) {
-                LOGGER.info("Error...", ex.getMessage());
+            } catch (RuntimeException ex) {
+                LOGGER.error(ex.getMessage(), ex.getStackTrace());
             }
         });
         delete.addClickListener(event -> {
@@ -57,7 +57,7 @@ public class AutoresAbmView extends Dialog {
                 deleteAthor(binder.getBean());
                 fireEvent(new DeleteAthorEvent(this, binder.getBean()));
             }catch (Exception ex){
-                LOGGER.info("Error...", ex.getMessage());
+                LOGGER.error("Error...", ex.getMessage());
             }
         });
         cancel.addClickListener(e -> close());
@@ -86,12 +86,12 @@ public class AutoresAbmView extends Dialog {
         binder.setBean(autorDTO);
     }
 
-    private void saveAthor() {
+    private void saveAthor() throws RuntimeException {
         binder.setBean(
                 autorRestService.save(binder.getBean())
         );
     }
-    private void deleteAthor(AutorDTO author) {
+    private void deleteAthor(AutorDTO author) throws Exception {
         autorRestService.deleteById(author);
     }
 

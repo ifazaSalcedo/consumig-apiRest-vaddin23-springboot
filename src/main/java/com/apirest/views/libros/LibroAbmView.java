@@ -4,7 +4,6 @@ import com.apirest.restdata.AutorDTO;
 import com.apirest.restdata.LibroDTO;
 import com.apirest.restservices.AutorRestService;
 import com.apirest.restservices.LibroRestService;
-import com.apirest.views.autores.AutoresAbmView;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEvent;
@@ -180,9 +179,7 @@ public class LibroAbmView extends Dialog {
     }
 
     private void carryListAuthors() {
-        author.setItems(query -> {
-            return autorRestService.findAll().stream();
-        });
+        author.setItems(autorRestService.findAll());
     }
 
     //CONSTRUIR OYENTE PARA EVENTO DE BOTONES DEL FORMULARIO
