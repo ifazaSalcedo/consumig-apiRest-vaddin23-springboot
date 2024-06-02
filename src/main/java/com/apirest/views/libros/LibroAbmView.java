@@ -1,12 +1,12 @@
 package com.apirest.views.libros;
 
+import com.apirest.genericlass.DialogViewEvent;
 import com.apirest.restdata.AutorDTO;
 import com.apirest.restdata.LibroDTO;
 import com.apirest.restservices.AutorRestService;
 import com.apirest.restservices.LibroRestService;
 import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.ComponentEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
@@ -22,9 +22,11 @@ import com.vaadin.flow.component.textfield.IntegerField;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.shared.Registration;
-import lombok.Getter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class LibroAbmView extends Dialog {
+    private static final Logger LOGGER = LoggerFactory.getLogger(LibroAbmView.class);
     private Binder<LibroDTO> binder = new Binder<>();
     private ComboBox<AutorDTO> author = new ComboBox<>("Autores");
     private TextField isbn = new TextField("Isbn");
@@ -41,18 +43,25 @@ public class LibroAbmView extends Dialog {
     private final LibroRestService libroRestService;
 
     public LibroAbmView(AutorRestService autorRestService, LibroRestService libroRestService) {
+
         this.autorRestService = autorRestService;
         this.libroRestService = libroRestService;
+
         mainDesign();
+
         carryListAuthors();//carry list athors
 
         //ACTION EVENT BUTTON
         save.addClickListener(event -> {
-            saveBook();
-            fireEvent(new SaveBookEvent(this, binder.getBean()));
+            try {
+                saveBook();
+            } catch (RuntimeException ex) {
+                LOGGER.error(ex.getMessage());
+            }
+
         });
         delete.addClickListener(event -> {
-            ConfirmDialog confirmDialog= new ConfirmDialog();
+            ConfirmDialog confirmDialog = new ConfirmDialog();
             confirmDialog.setHeader("Eliminar Registro");
             confirmDialog.setText("Desea eliminar el registro seleccionado?");
 
@@ -76,20 +85,15 @@ public class LibroAbmView extends Dialog {
             close();
         });
 
-        //ACTION COMBO ATHOR
-        author.addValueChangeListener(thor -> {
-            if(thor != null){
-                binder.getBean()
-                        .setIdAutor(thor.getValue().getCodigo());
-            }
-        });
-
         //CONFIGURE BINDER
         binder.forField(author)
+                .asRequired("Campo autor es requerido")
                 .bind(LibroDTO::getAutorDTO, LibroDTO::setAutorDTO);
         binder.forField(isbn)
+                .asRequired("Campos isbn es requerido")
                 .bind(LibroDTO::getIsbn, LibroDTO::setIsbn);
         binder.forField(titleBook)
+                .asRequired("Campo titulo es requerido")
                 .bind(LibroDTO::getNombre, LibroDTO::setNombre);
         binder.forField(editorial)
                 .bind(LibroDTO::getEditorial, LibroDTO::setEditorial);
@@ -102,23 +106,30 @@ public class LibroAbmView extends Dialog {
         binder.forField(price)
                 .bind(LibroDTO::getPrecio, LibroDTO::setPrecio);
 
+        binder.addStatusChangeListener(statusChangeEvent -> {
+            if (binder.getBean() != null) {
+                if (!statusChangeEvent.hasValidationErrors()) {
+                    save.setEnabled(!statusChangeEvent.hasValidationErrors());
+                }
+                delete.setEnabled(binder.getBean().getCodigo() != null);
+            }
+        });
     }
 
     private void deleteBook() {
         try {
             libroRestService.deleteById(binder.getBean());
-        }catch (Exception ex){
+        } catch (Exception ex) {
 
         }
     }
 
-    private void saveBook() {
-        try {
+    private void saveBook() throws RuntimeException {
+        if (binder.writeBeanIfValid(binder.getBean())) {
             binder.setBean(
                     libroRestService.save(binder.getBean())
             );
-        } catch (Exception ex) {
-
+            fireEvent(new SaveBookEvent(this, binder.getBean()));
         }
     }
 
@@ -184,17 +195,8 @@ public class LibroAbmView extends Dialog {
 
     //CONSTRUIR OYENTE PARA EVENTO DE BOTONES DEL FORMULARIO
     //PERMITE CONTROLAR LOS EVENTOS GENERADOS POR LOS BOTONES DESDE OTRA VISTA
-    public static abstract class LibrosAbmViewViewEvent extends ComponentEvent<LibroAbmView> {
-        @Getter
-        private LibroDTO libroDTO;
 
-        public LibrosAbmViewViewEvent(LibroAbmView source, LibroDTO libroDTO) {
-            super(source, false);
-            this.libroDTO = libroDTO;
-        }
-    }
-
-    public static class SaveBookEvent extends LibrosAbmViewViewEvent {
+    public static class SaveBookEvent extends DialogViewEvent<LibroDTO, LibroAbmView> {
         public SaveBookEvent(LibroAbmView source, LibroDTO libroDTO) {
             super(source, libroDTO);
         }
@@ -204,7 +206,7 @@ public class LibroAbmView extends Dialog {
         return addListener(SaveBookEvent.class, listener);
     }
 
-    public static class DeleteBookEvent extends LibrosAbmViewViewEvent {
+    public static class DeleteBookEvent extends DialogViewEvent<LibroDTO, LibroAbmView> {
         public DeleteBookEvent(LibroAbmView source, LibroDTO libroDTO) {
             super(source, libroDTO);
         }

@@ -3,28 +3,21 @@ package com.apirest.views.autores;
 import com.apirest.genericlass.DialogViewEvent;
 import com.apirest.restdata.AutorDTO;
 import com.apirest.restservices.AutorRestService;
-import com.apirest.views.libros.LibroAbmView;
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ClickEvent;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.button.ButtonVariant;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.formlayout.FormLayout;
-import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.binder.Binder;
 import com.vaadin.flow.shared.Registration;
-import org.atmosphere.interceptor.AtmosphereResourceStateRecovery;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
-import java.util.concurrent.ExecutionException;
 
 public class AutoresAbmView extends Dialog {
     private static final Logger LOGGER = LoggerFactory.getLogger(AutoresAbmView.class);
@@ -47,7 +40,6 @@ public class AutoresAbmView extends Dialog {
         save.addClickListener(event -> {
             try {
                 saveAthor();
-                fireEvent(new SaverAthorEvent(this, binder.getBean()));
             } catch (RuntimeException ex) {
                 LOGGER.error(ex.getMessage(), ex.getStackTrace());
             }
@@ -56,7 +48,7 @@ public class AutoresAbmView extends Dialog {
             try {
                 deleteAthor(binder.getBean());
                 fireEvent(new DeleteAthorEvent(this, binder.getBean()));
-            }catch (Exception ex){
+            } catch (Exception ex) {
                 LOGGER.error("Error...", ex.getMessage());
             }
         });
@@ -74,10 +66,12 @@ public class AutoresAbmView extends Dialog {
 
         //
         binder.addStatusChangeListener(statusChangeEvent -> {
-            if(binder.getBean() != null){
-                delete.setEnabled(binder.getBean().getCodigo() != null);
+            if (binder.getBean() != null) {
+                if (binder.getBean() != null) {
+                    delete.setEnabled(binder.getBean().getCodigo() != null);
+                }
+                save.setEnabled(!statusChangeEvent.hasValidationErrors());
             }
-            save.setEnabled(!statusChangeEvent.hasValidationErrors());
         });
     }
 
@@ -87,10 +81,14 @@ public class AutoresAbmView extends Dialog {
     }
 
     private void saveAthor() throws RuntimeException {
-        binder.setBean(
-                autorRestService.save(binder.getBean())
-        );
+        if (binder.writeBeanIfValid(binder.getBean())) {
+            binder.setBean(
+                    autorRestService.save(binder.getBean())
+            );
+            fireEvent(new SaverAthorEvent(this, binder.getBean()));
+        }
     }
+
     private void deleteAthor(AutorDTO author) throws Exception {
         autorRestService.deleteById(author);
     }
@@ -100,13 +98,13 @@ public class AutoresAbmView extends Dialog {
         cancel.addThemeVariants(ButtonVariant.LUMO_ERROR);
         delete.addThemeVariants(ButtonVariant.LUMO_PRIMARY, ButtonVariant.LUMO_ERROR);
         var layout1 = new HorizontalLayout();
-        var layout2= new HorizontalLayout();
+        var layout2 = new HorizontalLayout();
         layout2.add(delete);
         layout2.setJustifyContentMode(FlexComponent.JustifyContentMode.START);
         layout2.setPadding(false);
         layout2.setSpacing(false);
         layout2.setWidthFull();
-        layout1.add(layout2,save, cancel);
+        layout1.add(layout2, save, cancel);
         layout1.setJustifyContentMode(FlexComponent.JustifyContentMode.END);
         layout1.setWidthFull();
         return layout1;
@@ -138,11 +136,13 @@ public class AutoresAbmView extends Dialog {
     public Registration addSaveAthor(ComponentEventListener<SaverAthorEvent> listener) {
         return super.addListener(SaverAthorEvent.class, listener);
     }
+
     public static class DeleteAthorEvent extends DialogViewEvent<AutorDTO, AutoresAbmView> {
         public DeleteAthorEvent(AutoresAbmView source, AutorDTO author) {
             super(source, author);
         }
     }
+
     public Registration addDeleteAthor(ComponentEventListener<DeleteAthorEvent> listener) {
         return super.addListener(DeleteAthorEvent.class, listener);
     }
