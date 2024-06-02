@@ -1,8 +1,6 @@
 package com.apirest.restservices;
 
-import com.apirest.restdata.AutorDTO;
 import com.apirest.restdata.LibroDTO;
-import com.apirest.views.libros.LibroAbmView;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -17,7 +15,7 @@ public class LibroRestService {
     public LibroRestService(@Autowired WebClient webClient) {
         this.webClient = webClient;
     }
-    public List<LibroDTO> findAll(int offset, int limit){
+    public List<LibroDTO> findAll(){
         //ENVIAR AUTENTICACION A LA APIREST
         List<LibroDTO> books = webClient
                 .get()
@@ -28,12 +26,16 @@ public class LibroRestService {
                 .getBody();
         return books;
     }
-    public LibroDTO save(LibroDTO libroDTO){
+    public LibroDTO save(LibroDTO libroDTO) throws RuntimeException{
         LibroDTO book = webClient
                 .post()
                 .uri("/api/v1/biblioteca/libros")
                 .body(Mono.just(libroDTO), LibroDTO.class)
                 .retrieve()
+                .onStatus(status -> status.is4xxClientError() || status.is5xxServerError(),
+                        clientResponse -> clientResponse.bodyToMono(String.class).flatMap(errorBody -> {
+                            return Mono.error(new RuntimeException("Error: " + errorBody));
+                        }))
                 .bodyToMono(LibroDTO.class)
                 .block();
         return book;
